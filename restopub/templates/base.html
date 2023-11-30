@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Life Resto & Pub</title>
+        <script src="https://code.jquery.com/jquery-3.7.1.js"
+                integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+                crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="static/css/styles.css" />
+        <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+              rel="stylesheet" />
+    {% endblock %}
+</head>
+  <body>
+    <header class="header">
+      <div class="contact__bar">
+        <ul class="contact_physical__bar_list">
+          <li>
+            <ion-icon name="call"></ion-icon>
+            <a onclick="copyToClipBoard()" class="phone">+48 796 988 829</a>
+          </li>
+          <li>
+            <ion-icon name="location"></ion-icon>
+            <a onclick="location.href='https://www.google.com/maps/place/Life+Restaurant+%26+Pub/@50.115177,19.7924235,17z/data=!3m1!4b1!4m6!3m5!1s0x47165868ee9918b1:0xea88bdf5575c2e30!8m2!3d50.115177!4d19.7949984!16s%2Fg%2F11b7q9dql3?entry=ttu'" class="addres">Ul.Śląska 47, Zabierzów</a>
+          </li>
+        </ul>
+        <ul class="contact__bar_list">
+          <li>
+            <a class="facebook" onclick="location.href='https://www.facebook.com/lifeRistorante/?_rdc=1&_rdr'"><ion-icon name="logo-facebook"></ion-icon></a>
+          </li>
+          <li>
+            <a class="instagram"><ion-icon name="logo-instagram"></ion-icon></a>
+          </li>
+          <li>
+            <a class="message"><ion-icon name="navigate-outline"></ion-icon></a>
+          <li>
+        </ul>
+      </div>
+      <nav class="nav__bar">
+        <h3>Life Resto & Pub</h3>
+        <ul class="nav__bar_list">
+          <li><button class="nav__bar_button">Strona główna</button></li>
+          <li><button onclick="location.href='http://127.0.0.1:18080/about'" class="nav__bar_button">O nas</button></li>
+          <li><button onclick="location.href='http://127.0.0.1:18080/menu'" class="nav__bar_button">Menu</button></li>
+          <li><button onclick="location.href='http://127.0.0.1:18080/reserve'" class="nav__bar_button">Zarezerwuj stolik</button></li>
+          <button class="nav__bar_hidden_button">Zarezerwuj stolik</button>
+          <ul class="nav__bar_hidden_burger">
+            <li><button onclick="location.href='http://127.0.0.1:18080/home'" class="nav__bar_button">Strona główna</button></li>
+            <li><button onclick="location.href='http://127.0.0.1:18080/about'" class="nav__bar_button">O nas</button></li>
+            <li><button onclick="location.href='http://127.0.0.1:18080/menu'" class="nav__bar_button">Menu</button></li>
+            <li><button onclick="location.href='http://127.0.0.1:18080/reserve'" class="nav__bar_button">Zarezerwuj stolik</button></li>
+          </ul>
+        </ul>
+      </nav>
+    </header>
+    <section class="content">
+        {% block content %}
+        {% endblock %}
+    </section>
+    <section class="footer">
+      <div class="footer__container">
+        <ul class="footer__container_icon_list">
+          <li>
+            <a onclick="location.href='https://www.facebook.com/lifeRistorante/?_rdc=1&_rdr'" class="facebook"><ion-icon name="logo-facebook"></ion-icon></a>
+          </li>
+          <li>
+            <a class="instagram" onclick="location.href=''"><ion-icon name="logo-instagram"></ion-icon></a>
+          </li>
+          <li>
+            <a onclick="location.href='https://www.google.com/maps/place/Life+Restaurant+%26+Pub/@50.115177,19.7924235,17z/data=!3m1!4b1!4m6!3m5!1s0x47165868ee9918b1:0xea88bdf5575c2e30!8m2!3d50.115177!4d19.7949984!16s%2Fg%2F11b7q9dql3?entry=ttu'" class="location"><ion-icon name="location"></ion-icon></a>
+          </li>
+          <li>
+            <a onclick="copyToClipBoard()" class="phone"><ion-icon name="call"></ion-icon></a>
+          </li>
+          <li>
+            <a onclick="" class="message"><ion-icon name="navigate-outline"></ion-icon></a>
+          </li>
+        </ul>
+        <ul class="footer__container_navigate_list">
+          <li><button onclick="location.href='http://127.0.0.1:18080/home'" class="footer__button">Strona główna</button></li>
+          <li><button onclick="location.href='http://127.0.0.1:18080/about'" class="footer__button">O nas</button></li>
+          <li><button onclick="location.href='http://127.0.0.1:18080/menu'" class="footer__button">Menu</button></li>
+          <li><button onclick="location.href='http://127.0.0.1:18080/reserve'" class="footer__button">Zarezerwuj stolik</button></li>
+        </ul>
+        <div class="footer__container_bottom">
+          <p>Copyright &copy;2024 Robert Moń</p>
+        </div>
+      </div>
+    </section>
+  </body>
+  <script
+      src="static/js/script.js">
+  </script>
+  <script
+  type="module"
+  src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
+></script>
+<script
+  nomodule
+  src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
+></script>
+</html>
