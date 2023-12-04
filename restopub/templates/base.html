@@ -11,7 +11,7 @@
                 crossorigin="anonymous"></script>
         <link rel="stylesheet" href="static/css/styles.css" />
         <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
-              rel="stylesheet" />
+                rel="stylesheet" />
     {% endblock %}
 </head>
   <body>
@@ -42,16 +42,16 @@
       <nav class="nav__bar">
         <h3>Life Resto & Pub</h3>
         <ul class="nav__bar_list">
-          <li><button class="nav__bar_button">Strona główna</button></li>
-          <li><button onclick="location.href='http://127.0.0.1:18080/about'" class="nav__bar_button">O nas</button></li>
-          <li><button onclick="location.href='http://127.0.0.1:18080/menu'" class="nav__bar_button">Menu</button></li>
-          <li><button onclick="location.href='http://127.0.0.1:18080/reserve'" class="nav__bar_button">Zarezerwuj stolik</button></li>
+          <li><button class="home__button" id="home__button">Strona główna</button></li>
+          <li><button class="about__button" id="about__button">O nas</button></li>
+          <li><button class="menu__button" id="menu__button">Menu</button></li>
+          <li><button class="reserve__button" id="reserve__button">Zarezerwuj stolik</button></li>
           <button class="nav__bar_hidden_button">Zarezerwuj stolik</button>
           <ul class="nav__bar_hidden_burger">
-            <li><button onclick="location.href='http://127.0.0.1:18080/home'" class="nav__bar_button">Strona główna</button></li>
-            <li><button onclick="location.href='http://127.0.0.1:18080/about'" class="nav__bar_button">O nas</button></li>
-            <li><button onclick="location.href='http://127.0.0.1:18080/menu'" class="nav__bar_button">Menu</button></li>
-            <li><button onclick="location.href='http://127.0.0.1:18080/reserve'" class="nav__bar_button">Zarezerwuj stolik</button></li>
+            <li><button class="home__button" id="home__button">Strona główna</button></li>
+            <li><button class="about__button" id="about__button">O nas</button></li>
+            <li><button class="menu__button" id="menu__button">Menu</button></li>
+            <li><button class="reserve__button" id="reserve__button">Zarezerwuj stolik</button></li>
           </ul>
         </ul>
       </nav>
@@ -80,10 +80,10 @@
           </li>
         </ul>
         <ul class="footer__container_navigate_list">
-          <li><button onclick="location.href='http://127.0.0.1:18080/home'" class="footer__button">Strona główna</button></li>
-          <li><button onclick="location.href='http://127.0.0.1:18080/about'" class="footer__button">O nas</button></li>
-          <li><button onclick="location.href='http://127.0.0.1:18080/menu'" class="footer__button">Menu</button></li>
-          <li><button onclick="location.href='http://127.0.0.1:18080/reserve'" class="footer__button">Zarezerwuj stolik</button></li>
+          <li><button class="home__button" id="home__button">Strona główna</button></li>
+          <li><button class="about__button" id="about__button">O nas</button></li>
+          <li><button class="menu__button" id="menu__button">Menu</button></li>
+          <li><button class="reserve__button" id="reserve__button">Zarezerwuj stolik</button></li>
         </ul>
         <div class="footer__container_bottom">
           <p>Copyright &copy;2024 Robert Moń</p>

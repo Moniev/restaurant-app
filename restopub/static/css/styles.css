@@ -11,7 +11,6 @@
   flex-direction: column;
 }
 
-
 .header {
   top: 0;
   left: 0;
@@ -178,11 +177,71 @@
   display: flex;
 }
 
+.home__button {
+    font-size: 18px;
+    color: #e1e1e1;
+    font-family: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    border: none;
+    background: none;
+    transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition-duration: 400ms;
+    transition-property: color;
+    display: flex;
+}
+
+.about__button {
+    font-size: 18px;
+    color: #e1e1e1;
+    font-family: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    border: none;
+    background: none;
+    transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition-duration: 400ms;
+    transition-property: color;
+    display: flex;
+}
+
+.menu__button {
+    font-size: 18px;
+    color: #e1e1e1;
+    font-family: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    border: none;
+    background: none;
+    transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition-duration: 400ms;
+    transition-property: color;
+    display: flex;
+}
+
+.reserve__button {
+    font-size: 18px;
+    color: #e1e1e1;
+    font-family: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    border: none;
+    background: none;
+    transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition-duration: 400ms;
+    transition-property: color;
+    display: flex;
+}
+
 .nav__bar_button:focus:after,
 .nav__bar_button:hover:after {
-  width: 100%;
-  left: 0%;
-  color: white;
+    width: 100%;
+    left: 0%;
+    color: white;
 }
 
 .nav__bar_button:hover {
@@ -211,6 +270,8 @@
 }
 
 .parallax__container {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     background-color: white;
     height: 100vh;
@@ -230,8 +291,100 @@
     font-size: 2rem;
 }
 
-.footer{
-  position: relative;
+.form__container{
+    width: 30vw;
+    height: 60vh;
+    background: black; 
+    overflow: hidden;
+    border-radius: 4vw;
+}
+
+.form__container label{
+    color: white;
+    font-size: 2rem;
+    justify-content: center;
+    display: flex;
+    margin: 1vw;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.5s ease-in-out;
+}
+
+.form__container input{
+    width: 60%;
+    height: 20px;
+    background: white;
+    justify-content: center;
+    display: flex;
+    margin: 1vh auto;
+    padding: 1vh;
+    border: none;
+    outline: none;
+    border-radius: 1vh;
+}
+
+.form__container button {
+    width: 60%;
+    height: 4vh;
+    margin: 1vh;
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    background: gray;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-top: 2vh;
+    outline: none;
+    border: none;
+    border-radius: 1vh;
+    transition: 0.5s ease-in;
+    cursor: pointer;
+
+}
+
+.log_in__container{
+    height: 56vh;
+    background: green;
+    border-radius: 60% / 10%;
+    transform: translateY(-56vh);
+    transition: 0.8s ease-in-out;
+}
+
+.log_in__container label{
+    color: darkgrey;
+    transform: scale(1.2);
+}
+
+#swap__form:checked ~ .log_in__container {
+    transform: translateY(-10vh);
+}
+
+#swap__form:checked ~ .log_in__container label {
+    transform: scale(1);
+}
+
+#swap__form:checked ~ .sign_up__container label {
+    transform: scale(1.2);
+}
+
+
+
+#swap__form {
+    display: none;
+}
+
+.sign_up__container{
+    position: relative; 
+    width: 100%;
+    height: 100%;
+}
+
+
+
+
+.footer {
+    position: relative;
 }
 
 .footer__container{

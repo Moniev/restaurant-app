@@ -1,116 +1,438 @@
-
-#include <stdio.h> 
-#include <stdlib.h>
 #include <iostream>
 #include <crow.h>
+#include <crow/middlewares/session.h>
+#include <crow/middlewares/cors.h>
 #include <inja/inja.hpp>
 #include <pqxx/pqxx>
+#include <jwt-cpp/jwt.h>
+#include <fmt/format.h>
 
 using namespace inja; using namespace crow; using namespace std;
 
+
+pqxx::connection createConnection(){
+    pqxx::connection c("dbname = discord_bot user = postgres password = 1488Moniev! \
+      hostaddr = 127.0.0.1 port = 5432");
+    if (c.is_open()) {
+        std::cout << "connected to database!" << std::endl;
+    }
+    else {
+        std::cout << "connection is failed!" << std::endl;
+    }
+    return c;
+}
+
+bool checkIfTableExist(std::string table_name) {
+    pqxx::connection _connection = createConnection();
+    pqxx::nontransaction non_transaction(_connection);
+    std::string query = fmt::format("SELECT EXISTS(\
+        SELECT 1\
+        FROM pg_tables\
+        WHERE tablename = '{}')", table_name);
+    pqxx::result _result(non_transaction.exec(query));
+    return _result[0][0].as<bool>();
+}
+
+void createDatabase() {
+    std::string create_enters_table = "CREATE TABLE enters("\
+        "id SERIAL PRIMARY KEY,"\
+        "user_id INT NOT NULL,"\
+        "enter_date TIMESTAMP NOT NULL);";
+
+    std::string create_reservations_table = "CREATE TABLE reservations("\
+        "id SERIAL PRIMARY KEY,"\
+        "user_id INT NOT NULL,"\
+        "enter_date TIMESTAMP NOT NULL,"\
+        "leave_date TIMESTAMP NOT NULL);";
+    ;
+
+    std::string create_orders_table = "CREATE TABLE orders("\
+        "id SERIAL PRIMARY KEY,"\
+        "user_id INT NOT NULL,"\
+        "item TEXT NOT NULL,"\
+        "order_date TIMESTAMP NOT NULL,"\
+        "finalization_date TIMESTAMP NOT NULL);";
+
+    std::string create_clients_table = "CREATE TABLE clients("\
+        "id SERIAL PRIMARY KEY,"\
+        "name           TEXT    NOT NULL,"\
+        "lastname           TEXT    NOT NULL,"\
+        "email        TEXT NOT NULL,"\
+        "active BOOLEAN NOT NULL"\
+        "password         TEXT);";
+
+    std::string create_tokens_table = "CREATE TABLE tokens("\
+        "id SERIAL PRIMARY KEY,"\
+        "user_id INT NOT NULL,"\
+        "token TEXT NOT NULL);";
+
+    pqxx::connection _connection = createConnection();
+    pqxx::work _work(_connection);
+
+    if (!checkIfTableExist("enters")) {
+        _work.exec(create_enters_table);
+    }
+    if (!checkIfTableExist("reservations")) {
+        _work.exec(create_reservations_table);
+    } 
+    if (!checkIfTableExist("orders")) {
+        _work.exec(create_orders_table);
+    }
+    if (!checkIfTableExist("clients")) {
+        _work.exec(create_clients_table);
+    }
+    if (!checkIfTableExist("tokens")) {
+        _work.exec(create_tokens_table);
+    }
+
+    try {
+        _work.commit();
+        std::cout << "Database successfully created!" << std::endl;
+    }
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        std::cout << "Unable to create database!" << std::endl;
+    }
+}
+
+bool insertUser(std::string name, std::string lastname, std::string email, std::string password)
+{
+    pqxx::connection _connection = createConnection();
+    std::string insertion = fmt::format("INSERT INTO clients\
+                                        (name, lastname, email, password)\
+                                        VALUES('{0}', '{1}', '{2}', '{3}');", name, lastname, email, password);
+    pqxx::work _work(_connection);
+    _work.exec(insertion);
+    try {
+        _work.commit();
+        return true;
+    }
+    catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool deleteUser(std::string email, pqxx::connection& _connection)
+{
+    std::string insertion = fmt::format("", email);
+    pqxx::work _work(_connection);
+    _work.exec(insertion);
+    try {
+        _work.commit();
+        return true;
+    }
+    catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool checkIfUserIsActive(std::string email)
+{
+    pqxx::connection _connection = createConnection();
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", email);
+    pqxx::result _result(non_tranaction.exec(query));
+    if (_result.size() > 0) {
+        return _result[0][4].as<bool>();
+    }
+    return false;
+}
+
+bool validateToken(std::string token, std::string email)
+{
+    pqxx::connection _connection = createConnection();
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT C.id, T.token FROM clients C JOIN tokens T ON C.id = T.user_id WHERE C.email='{0}';", email);
+    pqxx::result _result(non_tranaction.exec(query));
+    if (_result.size() > 0) {
+        return _result[0][1].as<std::string>() == token;
+    }
+    return false;
+}
+
+bool activateUser(std::string email)
+{
+    pqxx::connection _connection = createConnection();
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", email);
+    pqxx::result _result(non_tranaction.exec(query));
+    if (_result.size() > 0) {
+        std::string update_statement = fmt::format("UPDATE clients SET active=true WHERE email='{0}';", email);
+        pqxx::work _work(_connection);
+        _work.exec(update_statement);
+        try {
+            _work.commit();
+            return true;
+        }
+        catch (std::exception& e) {
+            std::cout << e.what() << std::endl;
+        }
+    }
+    return false;
+}
+
+bool validateUser(std::string email, std::string password) 
+{
+    pqxx::connection _connection = createConnection();
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}' AND password='{1}'", email, password);
+    pqxx::result _result(non_tranaction.exec(query));
+    return (_result.size() > 0);
+}
+
+bool validateEmail(std::string email) 
+{
+    pqxx::connection _connection = createConnection();
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}'", email);
+    pqxx::result _result(non_tranaction.exec(query));
+    return (_result.size() == 0);
+}
+
+bool createUser(std::string nickname, std::string email, std::string password, std::string name, std::string lastname) 
+{
+    pqxx::connection _connection = createConnection();
+    pqxx::work _work(_connection);
+    std::string query = fmt::format("INSERT INTO clients()", email);
+    pqxx::result _result(_work.exec(query));
+    return (_result.size() > 0);
+}
+
+bool authenticateBearer(std::string& token, std::string nickname)
+{
+        auto decoded = jwt::decode(token);
+        auto verifier = jwt::verify()
+            .allow_algorithm(jwt::algorithm::hs256{ "secret" })
+            .with_issuer("auth0");
+        try {
+            verifier.verify(decoded);
+            return true;
+        }
+        catch (std::exception& e) {
+            std::cout << e.what() << std::endl;
+        }
+    return false;
+}
+
 int main()
 {
+    createDatabase();
 
-    crow::SimpleApp app;
+    using Session = crow::SessionMiddleware<crow::InMemoryStore>;
+    crow::App<crow::CookieParser, crow::CORSHandler, Session> app{ Session{
+        crow::CookieParser::Cookie("session").max_age(1 * 60 * 60).path("/"), 
+        64, 
+        crow::InMemoryStore{}} };
+
+    auto& cors = app.get_middleware<crow::CORSHandler>();
     inja::Environment env{ "" };
 
-    CROW_ROUTE(app, "/")([]() {
-        inja::Environment env{ "" };
-        inja::json data;
-        std::string result;
-        try {
-            result = env.render_file("./templates/home.html", data);
-        }
-        catch (inja::FileError) {
-            result = env.render_file("./templates/404.html", data);
-        }
-        return crow::response(result);
+    CROW_ROUTE(app, "/").methods("GET"_method)([&](const crow::request& req) 
+        {
+            std::string bearer = req.get_header_value("resto_jwt");
+            std::cout << bearer << std::endl;
+           
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/home.html", data);
+            }
+            catch (inja::FileError) { 
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/about")([]() {
-        inja::Environment env{ "" };
-        inja::json data;
-        string result;
-        try {
-            result = env.render_file("./templates/about.html", data);
-        }
-        catch (inja::FileError) {
-            result = env.render_file("./templates/404.html", data);
-        }
-        return crow::response(result);
+    CROW_ROUTE(app, "/about").methods("GET"_method)([&](const crow::request& req) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/about.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/admin")([]() {
-        inja::Environment env{ "" };
-        inja::json data;
-        string result;
-        try {
-            result = env.render_file("./templates/admin.html", data);
-        }
-        catch (inja::FileError) {
-            result = env.render_file("./templates/404.html", data);
-        }
-        return crow::response(result);
+    CROW_ROUTE(app, "/admin").methods("GET"_method)([&](const crow::request& req)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/admin.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/home")([]() {
-        inja::Environment env{ "" };
-        inja::json data;
-        std::string result;
-        try {
-            result = env.render_file("./templates/home.html", data);
-        } 
-        catch(inja::FileError) {
-            result = env.render_file("./templates/404.html", data);
-        } 
-        return crow::response(result);
+    CROW_ROUTE(app, "/home").methods("GET"_method, "POST"_method)([&](const crow::request& req) 
+        {
+            std::string bearer = req.get_header_value("resto_jwt");
+            std::cout << bearer << std::endl;
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/home.html", data);
+            } 
+            catch(inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            } 
+            return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/menu")([]() {
-        inja::Environment env{ "" };
-        inja::json data;
-        string result;
-        try {
-            result = env.render_file("./templates/menu.html", data);
-        }
-        catch (inja::FileError) {
-            result = env.render_file("./templates/404.html", data);
-        }
-        return crow::response(result);
+    CROW_ROUTE(app, "/menu").methods("GET"_method)([&](const crow::request& req) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/menu.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/reserve")([]() {
-        inja::Environment env{ "" };
-        inja::json data;
-        std::string result;
-        try {
-            result = env.render_file("./templates/reserve.html", data);
-        }
-        catch (inja::FileError) {
-            result = env.render_file("./templates/404.html", data);
-        }
-        return crow::response(result);
+    CROW_ROUTE(app, "/reserve/<string>/").methods("GET"_method)([&](const crow::request& req, std::string table)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/reserve.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/404")([]() {
-        inja::Environment env{ "" };
-        inja::json data;
-        std::string result;
-        try {
-            result = env.render_file("./templates/404.html", data);
-        }
-        catch (inja::FileError) {
-            result = env.render_file("./templates/404.html", data);
-        }
-
-        return crow::response(result);
+    CROW_ROUTE(app, "/order/<string>/").methods("GET"_method)([&](const crow::request& req, std::string id) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/reserve.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/load_menu/<string>/<int>/").methods("GET"_method)([](std::string reservation, int quantity) {
-        inja::json data;
-        return crow::response();
+    CROW_ROUTE(app, "/login").methods("GET"_method, "POST"_method)([&](const crow::request& req) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/login.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
         });
 
+    CROW_ROUTE(app, "/register").methods("POST"_method, "GET"_method)([&](const crow::request& req) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/register.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
+        });
+
+    CROW_ROUTE(app, "/404").methods("GET"_method)([&](const crow::request& req) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/404.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
+        });
+
+    CROW_ROUTE(app, "/activation").methods("POST"_method)([&](const crow::request& req) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            std::string result;
+            try {
+                result = env.render_file("./templates/activation.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
+        });
+
+    CROW_ROUTE(app, "/load_menu/<string>/<int>/").methods("GET"_method)([&](const crow::request& req, std::string reservation, int quantity) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/validate_login/<string>/<string>/").methods("GET"_method, "POST"_method)([&](const crow::request& req, std::string email, std::string password) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            if (validateUser(email, password)) {
+                auto token = jwt::create()
+                    .set_issuer(email)
+                    .set_type("JWS")
+                    .set_issued_at(std::chrono::system_clock::now())
+                    .set_expires_at(std::chrono::system_clock::now() + std::chrono::days{ 1 })
+                    .set_payload_claim("sample", jwt::claim(std::string("test")))
+                    .sign(jwt::algorithm::hs256{ "secret" });
+                return crow::response(token);
+            }
+            else {
+                return crow::response();
+            }
+        });
+
+    CROW_ROUTE(app, "/register_user/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string name, std::string lastname, std::string email, std::string password) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            if (validateEmail(email)) {
+                insertUser(name, lastname, email, password);
+            }
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/activate_account/<string>/<string>/<string>").methods("POST"_method)([&](const crow::request& req, std::string token, std::string email, std::string password) 
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            if (validateToken(token, email)) {
+                activateUser(email);
+            }
+            return crow::response();
+        });
 
     app.port(18080).multithreaded().run();
 }

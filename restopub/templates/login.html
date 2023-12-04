@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block head %}
+{{super()}}
+{% endblock %}
+{% block content %}
+<div class="parallax__container">
+    <section class="login">
+        <div class="form__container">
+            <input type="checkbox" id="swap__form" aria-hidden="true">
+            <div class="sign_up__container">
+                <form method="POST">
+                    <label for="swap__form">Rejestracja</label>
+                    <input type="text" name="name" placeholder="imiê" id="register__name" required="">
+                    <input type="text" name="last name" placeholder="nazwisko" id="register__last_name" required="">
+                    <input type="email" name="email" placeholder="email" id="register__email" required="">
+                    <input type="password" name="password" placeholder="password" id="register__password" required="">
+                    <button type="button" class="sign_up__button" onclick="">Zarejestruj siê</button>
+                </form>
+            </div>
+            <div class="log_in__container">
+                <form method="POST">
+                    <label for="swap__form">Logowanie</label>
+                    <input type="email" name="email" placeholder="email" id="login__email" required="">
+                    <input type="password" name="password" placeholder="password" id="login__password" required="">
+                    <button type="button" class="log_in__button" onclick="">Zaloguj siê</button>
+                </form>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
