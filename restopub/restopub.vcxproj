@@ -129,7 +129,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CRUD.cpp" />
     <ClCompile Include="restopub.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CRUD.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -22,18 +22,16 @@ pqxx::connection createConnection(){
     return c;
 }
 
-bool checkIfTableExist(std::string table_name) {
-    pqxx::connection _connection = createConnection();
-    pqxx::nontransaction non_transaction(_connection);
+bool checkIfTableExist(std::string table_name, pqxx::work& _work) {
     std::string query = fmt::format("SELECT EXISTS(\
         SELECT 1\
         FROM pg_tables\
         WHERE tablename = '{}')", table_name);
-    pqxx::result _result(non_transaction.exec(query));
+    pqxx::result _result(_work.exec(query));
     return _result[0][0].as<bool>();
 }
 
-void createDatabase() {
+void createDatabase(pqxx::connection& _connection) {
     std::string create_enters_table = "CREATE TABLE enters("\
         "id SERIAL PRIMARY KEY,"\
         "user_id INT NOT NULL,"\
@@ -66,22 +64,21 @@ void createDatabase() {
         "user_id INT NOT NULL,"\
         "token TEXT NOT NULL);";
 
-    pqxx::connection _connection = createConnection();
     pqxx::work _work(_connection);
 
-    if (!checkIfTableExist("enters")) {
+    if (!checkIfTableExist("enters", _work)) {
         _work.exec(create_enters_table);
     }
-    if (!checkIfTableExist("reservations")) {
+    if (!checkIfTableExist("reservations", _work)) {
         _work.exec(create_reservations_table);
     } 
-    if (!checkIfTableExist("orders")) {
+    if (!checkIfTableExist("orders", _work)) {
         _work.exec(create_orders_table);
     }
-    if (!checkIfTableExist("clients")) {
+    if (!checkIfTableExist("clients", _work)) {
         _work.exec(create_clients_table);
     }
-    if (!checkIfTableExist("tokens")) {
+    if (!checkIfTableExist("tokens", _work)) {
         _work.exec(create_tokens_table);
     }
 
@@ -95,9 +92,8 @@ void createDatabase() {
     }
 }
 
-bool insertUser(std::string name, std::string lastname, std::string email, std::string password)
+bool insertUser(std::string name, std::string lastname, std::string email, std::string password, pqxx::connection& _connection)
 {
-    pqxx::connection _connection = createConnection();
     std::string insertion = fmt::format("INSERT INTO clients\
                                         (name, lastname, email, password)\
                                         VALUES('{0}', '{1}', '{2}', '{3}');", name, lastname, email, password);
@@ -128,9 +124,8 @@ bool deleteUser(std::string email, pqxx::connection& _connection)
     }
 }
 
-bool checkIfUserIsActive(std::string email)
+bool checkIfUserIsActive(std::string email, pqxx::connection& _connection)
 {
-    pqxx::connection _connection = createConnection();
     pqxx::nontransaction non_tranaction(_connection);
     std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", email);
     pqxx::result _result(non_tranaction.exec(query));
@@ -140,9 +135,8 @@ bool checkIfUserIsActive(std::string email)
     return false;
 }
 
-bool validateToken(std::string token, std::string email)
+bool validateToken(std::string token, std::string email, pqxx::connection& _connection)
 {
-    pqxx::connection _connection = createConnection();
     pqxx::nontransaction non_tranaction(_connection);
     std::string query = fmt::format("SELECT C.id, T.token FROM clients C JOIN tokens T ON C.id = T.user_id WHERE C.email='{0}';", email);
     pqxx::result _result(non_tranaction.exec(query));
@@ -152,9 +146,8 @@ bool validateToken(std::string token, std::string email)
     return false;
 }
 
-bool activateUser(std::string email)
+bool activateUser(std::string email, pqxx::connection& _connection)
 {
-    pqxx::connection _connection = createConnection();
     pqxx::nontransaction non_tranaction(_connection);
     std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", email);
     pqxx::result _result(non_tranaction.exec(query));
@@ -173,27 +166,24 @@ bool activateUser(std::string email)
     return false;
 }
 
-bool validateUser(std::string email, std::string password) 
+bool validateUser(std::string email, std::string password, pqxx::connection& _connection)
 {
-    pqxx::connection _connection = createConnection();
     pqxx::nontransaction non_tranaction(_connection);
     std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}' AND password='{1}'", email, password);
     pqxx::result _result(non_tranaction.exec(query));
     return (_result.size() > 0);
 }
 
-bool validateEmail(std::string email) 
+bool validateEmail(std::string email, pqxx::connection& _connection)
 {
-    pqxx::connection _connection = createConnection();
     pqxx::nontransaction non_tranaction(_connection);
     std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}'", email);
     pqxx::result _result(non_tranaction.exec(query));
     return (_result.size() == 0);
 }
 
-bool createUser(std::string nickname, std::string email, std::string password, std::string name, std::string lastname) 
+bool createUser(std::string nickname, std::string email, std::string password, std::string name, std::string lastname, pqxx::connection& _connection)
 {
-    pqxx::connection _connection = createConnection();
     pqxx::work _work(_connection);
     std::string query = fmt::format("INSERT INTO clients()", email);
     pqxx::result _result(_work.exec(query));
@@ -218,7 +208,8 @@ bool authenticateBearer(std::string& token, std::string nickname)
 
 int main()
 {
-    createDatabase();
+    pqxx::connection _connection = createConnection();
+    createDatabase(_connection);
 
     using Session = crow::SessionMiddleware<crow::InMemoryStore>;
     crow::App<crow::CookieParser, crow::CORSHandler, Session> app{ Session{
@@ -399,7 +390,7 @@ int main()
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
-            if (validateUser(email, password)) {
+            if (validateUser(email, password, _connection)) {
                 auto token = jwt::create()
                     .set_issuer(email)
                     .set_type("JWS")
@@ -418,8 +409,8 @@ int main()
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
-            if (validateEmail(email)) {
-                insertUser(name, lastname, email, password);
+            if (validateEmail(email, _connection)) {
+                insertUser(name, lastname, email, password, _connection);
             }
             return crow::response();
         });
@@ -428,8 +419,8 @@ int main()
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
-            if (validateToken(token, email)) {
-                activateUser(email);
+            if (validateToken(token, email, _connection)) {
+                activateUser(email, _connection);
             }
             return crow::response();
         });

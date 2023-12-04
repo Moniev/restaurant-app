@@ -18,5 +18,13 @@
     <ClCompile Include="restopub.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CRUD.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CRUD.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
