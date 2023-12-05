@@ -1,4 +1,4 @@
-#include "CRUD.h"
+#include "CRUD.hpp"
 #include <fmt/format.h>
 
 
@@ -140,18 +140,23 @@ void CRUD::createDatabase(pqxx::connection& _connection)
 
     if (!CRUD::checkIfTableExist("enters", _connection)) {
         _work.exec(create_enters_table);
+        std::cout << "creating entries table" << std::endl;
     }
     if (!CRUD::checkIfTableExist("reservations",_connection)) {
         _work.exec(create_reservations_table);
+        std::cout << "creating reservations table" << std::endl;
     }
     if (!CRUD::checkIfTableExist("orders", _connection)) {
         _work.exec(create_orders_table);
+        std::cout << "creating orders table" << std::endl;
     }
     if (!CRUD::checkIfTableExist("clients", _connection)) {
         _work.exec(create_clients_table);
+        std::cout << "creating clients table" << std::endl;
     }
     if (!CRUD::checkIfTableExist("tokens", _connection)) {
         _work.exec(create_tokens_table);
+        std::cout << "tokens table" << std::endl;
     }
 
     try {

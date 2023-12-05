@@ -1,26 +1,43 @@
 #pragma once
 #include <pqxx/pqxx>
-class CRUD 
+#include <iostream>
+class CRUD
 {
-	private:
-		pqxx::connection;
-
 	public:
-		CRUD(pqxx::connection) {
-			this->connection = connection;
-		}
+		CRUD();
 
-		bool checkIfUsersExist()
-		{
-			
-		}
+		pqxx::connection createConnection();
 
-		bool insertItem()
-		{
+		void createDatabase(pqxx::connection& _connection);
+		
+		bool insertToken(std::string token, int user_id, pqxx::connection& _connection);
 
-		}
+		bool validateToken(std::string token, std::string email, pqxx::connection& _connection);
 
-		bool
+		bool deleteUser(std::string email, pqxx::connection& _connection);
 
+		bool activateUser(std::string email, pqxx::connection& _connection);
+	
+		bool insertUser(std::string name, std::string lastname, std::string email, std::string password, pqxx::connection& _connection);
 
+		bool insertOrder(int user_id, std::string order_date, pqxx::connection& _connection);
+
+		bool confirmOrder(int order_id, pqxx::connection& _connection);
+
+		bool deliverOrder(int order_id, pqxx::connection& _connection);
+
+		bool completeOrder(int order_id, pqxx::connection& _connection);
+
+		bool insertReservation(int user_id, std::string reservation_date, std::string leave_date, pqxx::connection& _connection);
+
+		bool confirmReservation(int reservation_id, pqxx::connection& _connection);
+
+		bool completeReservation(int reservation_id, pqxx::connection& _connection);
+
+		bool abortReservation(int reservation_id, pqxx::connection& _connection);
+
+		bool checkIfUserIsActive(std::string email, pqxx::connection& _connection);
+
+		bool checkIfTableExist(std::string table_name, pqxx::connection& _connection);
 };
+
