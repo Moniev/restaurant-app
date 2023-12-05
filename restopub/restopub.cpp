@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <crow.h>
 #include <crow/middlewares/session.h>
 #include <crow/middlewares/cors.h>
@@ -18,7 +19,7 @@ pqxx::connection createConnection(){
     }
     else {
         std::cout << "connection is failed!" << std::endl;
-    }
+    }                                       
     return c;
 }
 
@@ -40,6 +41,9 @@ void createDatabase(pqxx::connection& _connection) {
     std::string create_reservations_table = "CREATE TABLE reservations("\
         "id SERIAL PRIMARY KEY,"\
         "user_id INT NOT NULL,"\
+        "confirmed BOOLEAN NOT NULL,"\
+        "started BOOLEAN NOT NULL,"\
+        "completed BOOLEAN NOT NULL,"\
         "enter_date TIMESTAMP NOT NULL,"\
         "leave_date TIMESTAMP NOT NULL);";
     ;
@@ -48,6 +52,9 @@ void createDatabase(pqxx::connection& _connection) {
         "id SERIAL PRIMARY KEY,"\
         "user_id INT NOT NULL,"\
         "item TEXT NOT NULL,"\
+        "confirmed BOOLEAN NOT NULL,"\
+        "delivered BOOLEAN NOT NULL,"\
+        "completed BOOLEAN NOT NULL,"\
         "order_date TIMESTAMP NOT NULL,"\
         "finalization_date TIMESTAMP NOT NULL);";
 
@@ -91,6 +98,24 @@ void createDatabase(pqxx::connection& _connection) {
         std::cout << "Unable to create database!" << std::endl;
     }
 }
+
+bool insertReservation(std::string name, std::string lastname, std::string email, std::string password, pqxx::connection& _connection)
+{
+    std::string insertion = fmt::format("INSERT INTO clients\
+                                        (name, lastname, email, password)\
+                                        VALUES('{0}', '{1}', '{2}', '{3}');", name, lastname, email, password);
+    pqxx::work _work(_connection);
+    _work.exec(insertion);
+    try {
+        _work.commit();
+        return true;
+    }
+    catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+        return false;
+    }
+}
+
 
 bool insertUser(std::string name, std::string lastname, std::string email, std::string password, pqxx::connection& _connection)
 {
@@ -295,7 +320,7 @@ int main()
             return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/reserve/<string>/").methods("GET"_method)([&](const crow::request& req, std::string table)
+    CROW_ROUTE(app, "/reserve_table/<string>/<string>").methods("GET"_method)([&](const crow::request& req, std::string table, std::string token)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
@@ -309,7 +334,7 @@ int main()
             return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/order/<string>/").methods("GET"_method)([&](const crow::request& req, std::string id) 
+    CROW_ROUTE(app, "/order/<string>/<string>/").methods("GET"_method)([&](const crow::request& req, std::string id, std::string token) 
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
@@ -415,13 +440,84 @@ int main()
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/activate_account/<string>/<string>/<string>").methods("POST"_method)([&](const crow::request& req, std::string token, std::string email, std::string password) 
+    CROW_ROUTE(app, "/activate_account/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string token, std::string email, std::string password)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             if (validateToken(token, email, _connection)) {
                 activateUser(email, _connection);
             }
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/make_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string user_token, int user_id, std::string order_date)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/confirm_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/deliver_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/complete_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/abort_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/make_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string user_token, std::string reservation_date, std::string leave_date)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+
+    CROW_ROUTE(app, "/confirm_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/start_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/complete_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
+            return crow::response();
+        });
+
+    CROW_ROUTE(app, "/abort_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
+        {
+            auto& session = app.get_context<Session>(req);
+            inja::json data;
             return crow::response();
         });
 
