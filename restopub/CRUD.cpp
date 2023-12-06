@@ -1,7 +1,6 @@
 #include "CRUD.hpp"
 #include <fmt/format.h>
 
-
 CRUD::CRUD() {}
 
 pqxx::connection CRUD::createConnection()

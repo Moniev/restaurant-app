@@ -1,5 +1,4 @@
 #include <iostream>
-#include <chrono>
 #include <crow.h>
 #include <crow/middlewares/session.h>
 #include <crow/middlewares/cors.h>
@@ -7,8 +6,9 @@
 #include <pqxx/pqxx>
 #include <jwt-cpp/jwt.h>
 #include <fmt/format.h>
+#include <dotenv.h>
 
-using namespace inja; using namespace crow; using namespace std;
+using namespace inja; using namespace crow; using namespace std; using namespace dotenv;
 
 
 pqxx::connection createConnection(){
@@ -134,11 +134,11 @@ bool insertUser(std::string name, std::string lastname, std::string email, std::
     }
 }
 
-bool deleteUser(std::string email, pqxx::connection& _connection)
+bool deleteUser(int user_id, pqxx::connection& _connection)
 {
-    std::string insertion = fmt::format("", email);
+    std::string deletion = fmt::format("", user_id);
     pqxx::work _work(_connection);
-    _work.exec(insertion);
+    _work.exec(deletion);
     try {
         _work.commit();
         return true;
@@ -149,10 +149,10 @@ bool deleteUser(std::string email, pqxx::connection& _connection)
     }
 }
 
-bool checkIfUserIsActive(std::string email, pqxx::connection& _connection)
+bool checkIfUserIsActive(int user_id, pqxx::connection& _connection)
 {
     pqxx::nontransaction non_tranaction(_connection);
-    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", email);
+    std::string query = fmt::format("SELECT * FROM clients WHERE id='{0}';", user_id);
     pqxx::result _result(non_tranaction.exec(query));
     if (_result.size() > 0) {
         return _result[0][4].as<bool>();
@@ -160,10 +160,10 @@ bool checkIfUserIsActive(std::string email, pqxx::connection& _connection)
     return false;
 }
 
-bool validateToken(std::string token, std::string email, pqxx::connection& _connection)
+bool validateToken(std::string token, int user_id, pqxx::connection& _connection)
 {
     pqxx::nontransaction non_tranaction(_connection);
-    std::string query = fmt::format("SELECT C.id, T.token FROM clients C JOIN tokens T ON C.id = T.user_id WHERE C.email='{0}';", email);
+    std::string query = fmt::format("SELECT C.id, T.token FROM clients C JOIN tokens T ON C.id = T.user_id WHERE C.id='{0}';", user_id);
     pqxx::result _result(non_tranaction.exec(query));
     if (_result.size() > 0) {
         return _result[0][1].as<std::string>() == token;
@@ -171,13 +171,13 @@ bool validateToken(std::string token, std::string email, pqxx::connection& _conn
     return false;
 }
 
-bool activateUser(std::string email, pqxx::connection& _connection)
+bool activateUser(int user_id, pqxx::connection& _connection)
 {
     pqxx::nontransaction non_tranaction(_connection);
-    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", email);
+    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", user_id);
     pqxx::result _result(non_tranaction.exec(query));
     if (_result.size() > 0) {
-        std::string update_statement = fmt::format("UPDATE clients SET active=true WHERE email='{0}';", email);
+        std::string update_statement = fmt::format("UPDATE clients SET active=true WHERE email='{0}';", user_id);
         pqxx::work _work(_connection);
         _work.exec(update_statement);
         try {
@@ -440,52 +440,52 @@ int main()
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/activate_account/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string token, std::string email, std::string password)
+    CROW_ROUTE(app, "/activate_account/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string activation_token, int user_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
-            if (validateToken(token, email, _connection)) {
-                activateUser(email, _connection);
+            if (validateToken(activation_token, user_id, _connection)) {
+                activateUser(user_id, _connection);
             }
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/make_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string user_token, int user_id, std::string order_date)
+    CROW_ROUTE(app, "/make_order/<string>/<int>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string user_token, int user_id, std::string order_date)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/confirm_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
+    CROW_ROUTE(app, "/confirm_order/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/deliver_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
+    CROW_ROUTE(app, "/deliver_order/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/complete_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
+    CROW_ROUTE(app, "/complete_order/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/abort_order/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
+    CROW_ROUTE(app, "/abort_order/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int order_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/make_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string user_token, std::string reservation_date, std::string leave_date)
+    CROW_ROUTE(app, "/make_reservation/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string user_token, std::string reservation_date, std::string leave_date)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
@@ -493,28 +493,28 @@ int main()
         });
 
 
-    CROW_ROUTE(app, "/confirm_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
+    CROW_ROUTE(app, "/confirm_reservation/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/start_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
+    CROW_ROUTE(app, "/start_reservation/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/complete_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
+    CROW_ROUTE(app, "/complete_reservation/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/abort_reservation/<string>/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
+    CROW_ROUTE(app, "/abort_reservation/<string>/<int>/").methods("POST"_method)([&](const crow::request& req, std::string admin_token, int reservation_id)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
