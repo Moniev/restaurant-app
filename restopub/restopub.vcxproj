@@ -131,9 +131,11 @@
   <ItemGroup>
     <ClCompile Include="CRUD.cpp" />
     <ClCompile Include="restopub.cpp" />
+    <ClCompile Include="session.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CRUD.h" />
+    <ClInclude Include="session.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

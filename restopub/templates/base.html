@@ -42,17 +42,20 @@
       <nav class="nav__bar">
         <h3>Life Resto & Pub</h3>
         <ul class="nav__bar_list">
-          <li><button class="home__button" id="home__button">Strona główna</button></li>
-          <li><button class="about__button" id="about__button">O nas</button></li>
-          <li><button class="menu__button" id="menu__button">Menu</button></li>
-          <li><button class="reserve__button" id="reserve__button">Zarezerwuj stolik</button></li>
-          <button class="nav__bar_hidden_button">Zarezerwuj stolik</button>
-          <ul class="nav__bar_hidden_burger">
             <li><button class="home__button" id="home__button">Strona główna</button></li>
             <li><button class="about__button" id="about__button">O nas</button></li>
             <li><button class="menu__button" id="menu__button">Menu</button></li>
             <li><button class="reserve__button" id="reserve__button">Zarezerwuj stolik</button></li>
-          </ul>
+            {% if current_user != "guest" %}
+                <button class="logout__button">Wyloguj się</button>
+            {% endif %}
+            <button class="nav__bar_hidden_button">Zarezerwuj stolik</button>
+            <ul class="nav__bar_hidden_burger">
+                <li><button class="home__button" id="home__button">Strona główna</button></li>
+                <li><button class="about__button" id="about__button">O nas</button></li>
+                <li><button class="menu__button" id="menu__button">Menu</button></li>
+                <li><button class="reserve__button" id="reserve__button">Zarezerwuj stolik</button></li>
+            </ul>
         </ul>
       </nav>
     </header>

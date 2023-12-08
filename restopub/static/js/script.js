@@ -1,17 +1,7 @@
 const navigateHome = () => {
     $(document).ready(function () {
         $(".home__button").click(function () {
-            $.ajax({
-                type: 'GET',
-                url: '/home',
-                beforeSend: function (request) {
-                    request.setRequestHeader("resto_jwt", localStorage.getItem("resto_jwt"));
-                },
-                contentType: "application/json",
-                success: function (response) {
-                    window.location.href = "/home"
-                }
-            });
+            window.location.href = "/home";
         })
     })
 }
@@ -19,17 +9,7 @@ const navigateHome = () => {
 const navigateAbout = () => {
     $(document).ready(function () {
         $(".about__button").click(function () {
-            $.ajax({
-                type: 'GET',
-                url: '/about',
-                beforeSend: function (request) {
-                    request.setRequestHeader("resto_jwt", localStorage.getItem("resto_jwt"));
-                },
-                contentType: "application/json",
-                success: function (response) {
-                    window.location.href = "/about"
-                }
-            });
+            window.location.href = "/about";
         })
     })
 }
@@ -37,17 +17,7 @@ const navigateAbout = () => {
 const navigateMenu = () => {
     $(document).ready(function () {
         $(".menu__button").click(function () {
-            $.ajax({
-                type: 'GET',
-                url: '/menu',
-                beforeSend: function (request) {
-                    request.setRequestHeader("resto_jwt", localStorage.getItem("resto_jwt"));
-                },
-                contentType: "application/json",
-                success: function (response) {
-                    window.location.href = "/menu"
-                }
-            });
+            window.location.href = "/menu";
         })
     })
 }
@@ -55,17 +25,7 @@ const navigateMenu = () => {
 const navigateReserve = () => {
     $(document).ready(function () {
         $(".reserve__button").click(function () {
-            $.ajax({
-                type: 'GET',
-                url: '/reserve',
-                beforeSend: function (request) {
-                    request.setRequestHeader("resto_jwt", localStorage.getItem("resto_jwt"));
-                },
-                contentType: "application/json",
-                success: function (response) {
-                    window.location.href = "/reserve"
-                }
-            });
+            window.location.href = "/reserve";
         })
     })
 }
@@ -73,17 +33,7 @@ const navigateReserve = () => {
 const navigateLogIn = () => {
     $(document).ready(function () {
         $("#").click(function () {
-            $.ajax({
-                type: 'GET',
-                url: '/about',
-                beforeSend: function (request) {
-                    request.setRequestHeader("resto_jwt", localStorage.getItem("resto_jwt"));
-                },
-                contentType: "application/json",
-                success: function (response) {
-                    window.location.href = "/login"
-                }
-            });
+            window.location.href = "/login"
         })
     })
 }
@@ -91,17 +41,7 @@ const navigateLogIn = () => {
 const navigateSignUp = () => {
     $(document).ready(function () {
         $("#").click(function () {
-            $.ajax({
-                type: 'GET',
-                url: '/about',
-                beforeSend: function (request) {
-                    request.setRequestHeader("resto_jwt", localStorage.getItem("resto_jwt"));
-                },
-                contentType: "application/json",
-                success: function (response) {
-                    window.location.href = "/register"
-                }
-            });
+            window.location.href = "/register";
         })
     })
 }
@@ -120,7 +60,7 @@ const signUpAction = () => {
                 contentType: "application/json",
                 success: function (response) {
                     localStorage.setItem("resto_jwt", response)
-                    window.location.href = "/register"
+                    window.location.href = "/activation";
                 },
                 error: function () {
                     console.log("alfa")
@@ -142,7 +82,7 @@ const loginAction = () => {
                 contentType: "application/json",
                 success: function (response) {
                     localStorage.setItem("resto_jwt", response)
-                    console.log(localStorage.getItem("resto_jwt"));
+                    window.location.href = "/home";
                 },
                 error: function () {
                     console.log("alfa")

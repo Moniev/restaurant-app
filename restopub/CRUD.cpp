@@ -16,6 +16,24 @@ pqxx::connection CRUD::createConnection()
     return c;
 }
 
+bool insertToken(int user_id, std::string token, pqxx::connection& _connection)
+{
+    std::string insertion = fmt::format("INSERT INTO tokens\
+                                         (user_id, token)\
+                                         VALUES('{0}', '{1}')", user_id, token);
+    pqxx::work _work(_connection);
+    _work.exec(insertion);
+    try {
+        _work.commit();
+        return true;
+    }
+    catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+        return false;
+    }
+}
+
+
 bool CRUD::activateUser(std::string email, pqxx::connection& _connection)
 {
     pqxx::nontransaction non_tranaction(_connection);
@@ -68,7 +86,7 @@ bool CRUD::insertUser(std::string name, std::string lastname, std::string email,
     }
 }
 
-bool CRUD::checkIfUserIsActive(std::string email, pqxx::connection& _connection)
+bool CRUD::checkIfUserIsActive(std::string email, pqxx::connection &_connection)
 {
     pqxx::nontransaction non_tranaction(_connection);
     std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", email);
@@ -79,13 +97,25 @@ bool CRUD::checkIfUserIsActive(std::string email, pqxx::connection& _connection)
     return false;
 }
 
+std::string CRUD::getUserNickname(int user_id, pqxx::connection &_connection)
+{
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT name FROM clients WHERE id='{0}';", user_id);
+    pqxx::result _result(non_tranaction.exec(query));
+    if (_result.size() > 0) {
+        return _result[0][0].as<std::string>();
+    }
+    return "guest";
+}
+
+
 bool CRUD::checkIfTableExist(std::string table_name, pqxx::connection& _connection)
 {
     pqxx::nontransaction non_transaction(_connection);
     std::string query = fmt::format("SELECT EXISTS(\
-        SELECT 1\
-        FROM pg_tables\
-        WHERE tablename = '{}')", table_name);
+                                     SELECT 1\
+                                     FROM pg_tables\
+                                     WHERE tablename = '{}')", table_name);
     pqxx::result _result(non_transaction.exec(query));
     return _result[0][0].as<bool>();
 }

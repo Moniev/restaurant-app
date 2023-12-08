@@ -20,6 +20,8 @@ class CRUD
 	
 		bool insertUser(std::string name, std::string lastname, std::string email, std::string password, pqxx::connection& _connection);
 
+		std::string getUserNickname(int user_id, pqxx::connection& _connection);
+
 		bool insertOrder(int user_id, std::string order_date, pqxx::connection& _connection);
 
 		bool confirmOrder(int order_id, pqxx::connection& _connection);

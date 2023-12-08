@@ -194,7 +194,7 @@ bool activateUser(int user_id, pqxx::connection& _connection)
 bool validateUser(std::string email, std::string password, pqxx::connection& _connection)
 {
     pqxx::nontransaction non_tranaction(_connection);
-    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}' AND password='{1}'", email, password);
+    std::string query = fmt::format("SELECT id FROM clients WHERE email='{0}' AND password='{1}'", email, password);
     pqxx::result _result(non_tranaction.exec(query));
     return (_result.size() > 0);
 }
@@ -231,28 +231,53 @@ bool authenticateBearer(std::string& token, std::string nickname)
     return false;
 }
 
+
+std::string getUserNickname(int user_id, pqxx::connection &_connection)
+{
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT name FROM clients WHERE id='{0}';", user_id);
+    pqxx::result _result(non_tranaction.exec(query));
+    if (_result.size() > 0) {
+        return _result[0][0].as<std::string>();
+    }
+    return "guest";
+}
+
+
+
 int main()
 {
+
     pqxx::connection _connection = createConnection();
     createDatabase(_connection);
 
     using Session = crow::SessionMiddleware<crow::InMemoryStore>;
     crow::App<crow::CookieParser, crow::CORSHandler, Session> app{ Session{
-        crow::CookieParser::Cookie("session").max_age(1 * 60 * 60).path("/"), 
-        64, 
+
         crow::InMemoryStore{}} };
+    
 
     auto& cors = app.get_middleware<crow::CORSHandler>();
     inja::Environment env{ "" };
 
     CROW_ROUTE(app, "/").methods("GET"_method)([&](const crow::request& req) 
         {
-            std::string bearer = req.get_header_value("resto_jwt");
-            std::cout << bearer << std::endl;
-           
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+
+            std::string logged_in = ctx.get_cookie("resto_session");
+
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+
             inja::json data;
             std::string result;
+
+            int views = session.get("views", 0);
+            data["views"] = views;
+            data["current_user"] = "guest";
+
             try {
                 result = env.render_file("./templates/home.html", data);
             }
@@ -264,9 +289,24 @@ int main()
 
     CROW_ROUTE(app, "/about").methods("GET"_method)([&](const crow::request& req) 
         {
+            auto& ctx = app.get_context<crow::CookieParser>(req);
             auto& session = app.get_context<Session>(req);
+
+            std::string session_id = ctx.get_cookie("resto_session");
+            int user_id = session.get(session_id, 0);
+            std::string user_nickname = getUserNickname(user_id, _connection);
+
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+            
             inja::json data;
             std::string result;
+            
+            int views = session.get("views", 0);
+
+            data["views"] = views;
+            data["current_user"] = user_nickname;
             try {
                 result = env.render_file("./templates/about.html", data);
             }
@@ -279,8 +319,22 @@ int main()
     CROW_ROUTE(app, "/admin").methods("GET"_method)([&](const crow::request& req)
         {
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+            
             inja::json data;
             std::string result;
+            
+            int views = session.get("views", 0);
+            
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/admin.html", data);
             }
@@ -292,11 +346,20 @@ int main()
 
     CROW_ROUTE(app, "/home").methods("GET"_method, "POST"_method)([&](const crow::request& req) 
         {
-            std::string bearer = req.get_header_value("resto_jwt");
-            std::cout << bearer << std::endl;
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+            
             inja::json data;
             std::string result;
+            
+            session.set("views", 0);
+            int views = session.get("views", 0);
+            
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/home.html", data);
             } 
@@ -309,8 +372,22 @@ int main()
     CROW_ROUTE(app, "/menu").methods("GET"_method)([&](const crow::request& req) 
         {
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+            
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+            
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+            
             inja::json data;
             std::string result;
+            
+            int views = session.get("views", 0);
+
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/menu.html", data);
             }
@@ -323,8 +400,22 @@ int main()
     CROW_ROUTE(app, "/reserve_table/<string>/<string>").methods("GET"_method)([&](const crow::request& req, std::string table, std::string token)
         {
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+            
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+            
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+            
             inja::json data;
             std::string result;
+            
+            int views = session.get("views", 0);
+
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/reserve.html", data);
             }
@@ -337,8 +428,22 @@ int main()
     CROW_ROUTE(app, "/order/<string>/<string>/").methods("GET"_method)([&](const crow::request& req, std::string id, std::string token) 
         {
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+            
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+            
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+
             inja::json data;
             std::string result;
+            
+            int views = session.get("views", 0);
+            
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/reserve.html", data);
             }
@@ -351,8 +456,22 @@ int main()
     CROW_ROUTE(app, "/login").methods("GET"_method, "POST"_method)([&](const crow::request& req) 
         {
             auto& session = app.get_context<Session>(req);
-            inja::json data;
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+            
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+            
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+            
+            inja::json data;  
             std::string result;
+            
+            int views = session.get("views", 0);
+          
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/login.html", data);
             }
@@ -365,8 +484,22 @@ int main()
     CROW_ROUTE(app, "/register").methods("POST"_method, "GET"_method)([&](const crow::request& req) 
         {
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+            
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+            
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+            
             inja::json data;
             std::string result;
+            
+            int views = session.get("views", 0);
+
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/register.html", data);
             }
@@ -379,8 +512,21 @@ int main()
     CROW_ROUTE(app, "/404").methods("GET"_method)([&](const crow::request& req) 
         {
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+            
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+            
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
             inja::json data;
             std::string result;
+            
+            int views = session.get("views", 0);
+            
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/404.html", data);
             }
@@ -393,8 +539,22 @@ int main()
     CROW_ROUTE(app, "/activation").methods("POST"_method)([&](const crow::request& req) 
         {
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+
+            std::string cookie = ctx.get_cookie("resto_session");
+            cout << cookie << endl;
+            
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+            
             inja::json data;
             std::string result;
+            
+            int views = session.get("views", 0);
+            
+            data["views"] = views;
+            data["current_user"] = "guest";
             try {
                 result = env.render_file("./templates/activation.html", data);
             }
@@ -414,8 +574,10 @@ int main()
     CROW_ROUTE(app, "/validate_login/<string>/<string>/").methods("GET"_method, "POST"_method)([&](const crow::request& req, std::string email, std::string password) 
         {
             auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
             inja::json data;
-            if (validateUser(email, password, _connection)) {
+            if (validateUser(email, password, _connection))
+            {
                 auto token = jwt::create()
                     .set_issuer(email)
                     .set_type("JWS")
@@ -423,6 +585,8 @@ int main()
                     .set_expires_at(std::chrono::system_clock::now() + std::chrono::days{ 1 })
                     .set_payload_claim("sample", jwt::claim(std::string("test")))
                     .sign(jwt::algorithm::hs256{ "secret" });
+                ctx.set_cookie("resto_session", password).max_age(30).path("/").httponly();
+                
                 return crow::response(token);
             }
             else {
@@ -436,6 +600,7 @@ int main()
             inja::json data;
             if (validateEmail(email, _connection)) {
                 insertUser(name, lastname, email, password, _connection);
+                
             }
             return crow::response();
         });

@@ -120,7 +120,7 @@
   font-size: 1rem;
   display: flex;
   flex-direction: column;
-  list-style:
+  list-style: none;
 }
 
 .nav__bar_hidden_burger li button{
@@ -224,6 +224,21 @@
 
 .reserve__button {
     font-size: 18px;
+    color: #e1e1e1;
+    font-family: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    border: none;
+    background: none;
+    transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition-duration: 400ms;
+    transition-property: color;
+    display: flex;
+}
+
+.logout__button {
+    font-size: 10px;
     color: #e1e1e1;
     font-family: inherit;
     font-weight: 800;
