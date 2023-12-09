@@ -9,6 +9,8 @@
         <script src="https://code.jquery.com/jquery-3.7.1.js"
                 integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
                 crossorigin="anonymous"></script>
+        <script type="text/javascript"
+                src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
         <link rel="stylesheet" href="static/css/styles.css" />
         <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
                 rel="stylesheet" />
@@ -47,7 +49,7 @@
             <li><button class="menu__button" id="menu__button">Menu</button></li>
             <li><button class="reserve__button" id="reserve__button">Zarezerwuj stolik</button></li>
             {% if current_user != "guest" %}
-                <button class="logout__button">Wyloguj się</button>
+                <button class="log_out__button">Wyloguj się</button>
             {% endif %}
             <button class="nav__bar_hidden_button">Zarezerwuj stolik</button>
             <ul class="nav__bar_hidden_burger">
@@ -96,13 +98,9 @@
   </body>
   <script
       src="static/js/script.js">
-  </script>
-  <script
-  type="module"
-  src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
-></script>
-<script
-  nomodule
-  src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
-></script>
+    </script>
+    <script type="module"
+            src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule
+            src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </html>

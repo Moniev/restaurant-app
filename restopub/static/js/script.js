@@ -1,3 +1,15 @@
+function getCookie(_name) {
+    const name = _name + "=";
+  const cDecoded = decodeURIComponent(document.cookie);
+  const cArr = cDecoded.split('; ');
+  let res;
+  cArr.forEach(val => {
+    if (val.indexOf(name) === 0) res = val.substring(name.length);
+  })
+  return res
+}
+
+
 const navigateHome = () => {
     $(document).ready(function () {
         $(".home__button").click(function () {
@@ -29,6 +41,8 @@ const navigateReserve = () => {
         })
     })
 }
+
+
 /*
 const navigateLogIn = () => {
     $(document).ready(function () {
@@ -50,16 +64,16 @@ const navigateSignUp = () => {
 const signUpAction = () => {
     $(document).ready(function () {
         $(".sign_up__button").click(function () {
+            var nickname = document.getElementById("register__nickname").value;
             var name = document.getElementById("register__name").value;
             var lastname = document.getElementById("register__last_name").value;
             var email = document.getElementById("register__email").value;
             var password = document.getElementById("register__password").value;
             $.ajax({
                 type: "POST",
-                url: "/register_user/" + name + "/" + lastname + "/" + email + "/" + password + "/",
+                url: "/register_user/" + nickname + "/" + name + "/" + lastname + "/" + email + "/" + password + "/",
                 contentType: "application/json",
                 success: function (response) {
-                    localStorage.setItem("resto_jwt", response)
                     window.location.href = "/activation";
                 },
                 error: function () {
@@ -73,15 +87,14 @@ const signUpAction = () => {
 const loginAction = () => {
     $(document).ready(function () {
         $(".log_in__button").click(function () {
-            console.log(localStorage.getItem("resto_jwt"));
-            var email = document.getElementById("login__email").value;
-            var password = document.getElementById("login__password").value;
+            const email = document.getElementById("login__email").value;
+            const password = document.getElementById("login__password").value;
+            console.log("STEC")
             $.ajax({
-                type: "GET",
+                type: "POST",
                 url: "/validate_login/" + email + "/" + password + "/",
                 contentType: "application/json",
                 success: function (response) {
-                    localStorage.setItem("resto_jwt", response)
                     window.location.href = "/home";
                 },
                 error: function () {
@@ -95,10 +108,24 @@ const loginAction = () => {
 const logoutAction = () => {
     $(document).ready(function () {
         $(".log_out__button").click(function () {
-            localStorage.removeItem("resto_jwt");
+            const session_id = getCookie("resto_session");
+            console.log(session_id)
+            $.ajax({
+                type: "POST",
+                url: "/logout_user/",
+                contentType: "application/json",
+                success: function (response) {
+                    if (response) {
+                        window.location.href = "/home";
+                    }
+                },
+                error: function () {
+                    console.log("error")
+                }
+            })
         })
     })
-}
+};
 
 const copyToClipBoard = () => {
     $(document).ready(function () {
@@ -110,6 +137,7 @@ const copyToClipBoard = () => {
 
 
 loginAction();
+logoutAction();
 signUpAction();
 navigateHome();
 navigateAbout();

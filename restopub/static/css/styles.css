@@ -237,7 +237,7 @@
     display: flex;
 }
 
-.logout__button {
+.log_out__button {
     font-size: 10px;
     color: #e1e1e1;
     font-family: inherit;

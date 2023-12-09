@@ -23,7 +23,7 @@ pqxx::connection createConnection(){
     return c;
 }
 
-bool checkIfTableExist(std::string table_name, pqxx::work& _work) {
+bool checkIfTableExist(std::string table_name, pqxx::work &_work) {
     std::string query = fmt::format("SELECT EXISTS(\
         SELECT 1\
         FROM pg_tables\
@@ -46,7 +46,6 @@ void createDatabase(pqxx::connection& _connection) {
         "completed BOOLEAN NOT NULL,"\
         "enter_date TIMESTAMP NOT NULL,"\
         "leave_date TIMESTAMP NOT NULL);";
-    ;
 
     std::string create_orders_table = "CREATE TABLE orders("\
         "id SERIAL PRIMARY KEY,"\
@@ -60,11 +59,12 @@ void createDatabase(pqxx::connection& _connection) {
 
     std::string create_clients_table = "CREATE TABLE clients("\
         "id SERIAL PRIMARY KEY,"\
-        "name           TEXT    NOT NULL,"\
-        "lastname           TEXT    NOT NULL,"\
-        "email        TEXT NOT NULL,"\
-        "active BOOLEAN NOT NULL"\
-        "password         TEXT);";
+        "nickname TEXT NOT NULL,"\
+        "name TEXT NOT NULL,"\
+        "lastname TEXT NOT NULL,"\
+        "email TEXT NOT NULL,"\
+        "active BOOLEAN DEFAULT FALSE,"\
+        "password TEXT NOT NULL);";
 
     std::string create_tokens_table = "CREATE TABLE tokens("\
         "id SERIAL PRIMARY KEY,"\
@@ -99,11 +99,11 @@ void createDatabase(pqxx::connection& _connection) {
     }
 }
 
-bool insertReservation(std::string name, std::string lastname, std::string email, std::string password, pqxx::connection& _connection)
+bool insertReservation(int user_id, std::string reservation_date, std::string leave_date, pqxx::connection& _connection)
 {
-    std::string insertion = fmt::format("INSERT INTO clients\
-                                        (name, lastname, email, password)\
-                                        VALUES('{0}', '{1}', '{2}', '{3}');", name, lastname, email, password);
+    std::string insertion = fmt::format("INSERT INTO reservations\
+                                        (user_id, reservation_date, leave_date)\
+                                         VALUES('{0}', '{1}', '{2}');", user_id, reservation_date, leave_date);
     pqxx::work _work(_connection);
     _work.exec(insertion);
     try {
@@ -117,11 +117,11 @@ bool insertReservation(std::string name, std::string lastname, std::string email
 }
 
 
-bool insertUser(std::string name, std::string lastname, std::string email, std::string password, pqxx::connection& _connection)
+bool insertUser(std::string nickname, std::string name, std::string lastname, std::string email, std::string password, pqxx::connection& _connection)
 {
     std::string insertion = fmt::format("INSERT INTO clients\
-                                        (name, lastname, email, password)\
-                                        VALUES('{0}', '{1}', '{2}', '{3}');", name, lastname, email, password);
+                                        (nickname, name, lastname, email, password)\
+                                         VALUES('{0}', '{1}', '{2}', '{3}', {4});", nickname, name, lastname, email, password);
     pqxx::work _work(_connection);
     _work.exec(insertion);
     try {
@@ -225,7 +225,7 @@ bool authenticateBearer(std::string& token, std::string nickname)
             verifier.verify(decoded);
             return true;
         }
-        catch (std::exception& e) {
+        catch (std::exception &e) {
             std::cout << e.what() << std::endl;
         }
     return false;
@@ -235,7 +235,7 @@ bool authenticateBearer(std::string& token, std::string nickname)
 std::string getUserNickname(int user_id, pqxx::connection &_connection)
 {
     pqxx::nontransaction non_tranaction(_connection);
-    std::string query = fmt::format("SELECT name FROM clients WHERE id='{0}';", user_id);
+    std::string query = fmt::format("SELECT nickname FROM clients WHERE id='{0}';", user_id);
     pqxx::result _result(non_tranaction.exec(query));
     if (_result.size() > 0) {
         return _result[0][0].as<std::string>();
@@ -243,16 +243,33 @@ std::string getUserNickname(int user_id, pqxx::connection &_connection)
     return "guest";
 }
 
+pqxx::result getUserByEmail(std::string email, pqxx::connection &_connection)
+{
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT * FROM clients WHERE email='{0}';", email);
+    pqxx::result _result(non_tranaction.exec(query));
+    return _result;
+}
 
+int getUserId(std::string email, pqxx::connection &_connection)
+{
+    pqxx::nontransaction non_tranaction(_connection);
+    std::string query = fmt::format("SELECT id FROM clients WHERE email='{0}';", email);
+    pqxx::result _result(non_tranaction.exec(query));
+    if (_result.size() > 0) {
+        return _result[0][0].as<int>();
+    }
+    return 0;
+}
 
 int main()
 {
-
     pqxx::connection _connection = createConnection();
     createDatabase(_connection);
 
     using Session = crow::SessionMiddleware<crow::InMemoryStore>;
-    crow::App<crow::CookieParser, crow::CORSHandler, Session> app{ Session{
+    crow::App<crow::CookieParser, crow::CORSHandler, Session> app{ Session{crow::CookieParser::Cookie("session").max_age(24 * 60 * 60).path("/"), 
+        4,
 
         crow::InMemoryStore{}} };
     
@@ -265,8 +282,10 @@ int main()
             auto& ctx = app.get_context<crow::CookieParser>(req);
             auto& session = app.get_context<Session>(req);
 
+
             std::string session_id = ctx.get_cookie("resto_session");
             int user_id = session.get(session_id, 0);
+
             std::string user_nickname = user_id != 0 ? getUserNickname(user_id, _connection) : "guest";
 
             session.apply("views", [](int v) {
@@ -280,7 +299,7 @@ int main()
 
             data["views"] = views;
             data["current_user"] = user_nickname;
-
+            cout << user_nickname << endl;
             try {
                 result = env.render_file("./templates/home.html", data);
             }
@@ -297,6 +316,7 @@ int main()
 
             std::string session_id = ctx.get_cookie("resto_session");
             int user_id = session.get(session_id, 0);
+
             std::string user_nickname = user_id != 0 ? getUserNickname(user_id, _connection) : "guest";
 
             session.apply("views", [](int v) {
@@ -310,6 +330,7 @@ int main()
 
             data["views"] = views;
             data["current_user"] = user_nickname;
+            cout << user_nickname << endl;
             try {
                 result = env.render_file("./templates/about.html", data);
             }
@@ -325,7 +346,9 @@ int main()
             auto& session = app.get_context<Session>(req);
 
             std::string session_id = ctx.get_cookie("resto_session");
+            cout << session_id << endl;
             int user_id = session.get(session_id, 0);
+            cout << user_id << endl;
             std::string user_nickname = user_id != 0 ? getUserNickname(user_id, _connection) : "guest";
 
             session.apply("views", [](int v) {
@@ -339,6 +362,7 @@ int main()
 
             data["views"] = views;
             data["current_user"] = user_nickname;
+            cout << user_nickname << endl;
             try {
                 result = env.render_file("./templates/admin.html", data);
             }
@@ -368,6 +392,7 @@ int main()
 
             data["views"] = views;
             data["current_user"] = user_nickname;
+            cout << user_nickname << endl;
             try {
                 result = env.render_file("./templates/home.html", data);
             } 
@@ -383,7 +408,9 @@ int main()
             auto& session = app.get_context<Session>(req);
 
             std::string session_id = ctx.get_cookie("resto_session");
+            cout << session_id << endl;
             int user_id = session.get(session_id, 0);
+            cout << user_id << endl;
             std::string user_nickname = user_id != 0 ? getUserNickname(user_id, _connection) : "guest";
 
             session.apply("views", [](int v) {
@@ -397,6 +424,7 @@ int main()
 
             data["views"] = views;
             data["current_user"] = user_nickname;
+            cout << user_nickname << endl;
             try {
                 result = env.render_file("./templates/menu.html", data);
             }
@@ -406,7 +434,38 @@ int main()
             return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/reserve_table/<string>/<string>").methods("GET"_method)([&](const crow::request& req, std::string table, std::string token)
+    CROW_ROUTE(app, "/reserve_table/<string>/<string>").methods("POST"_method)([&](const crow::request& req, std::string table, std::string token)
+        {
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+            auto& session = app.get_context<Session>(req);
+
+            std::string session_id = ctx.get_cookie("resto_session");
+            cout << session_id << endl;
+            int user_id = session.get(session_id, 0);
+            cout << user_id << endl;
+            std::string user_nickname = user_id != 0 ? getUserNickname(user_id, _connection) : "guest";
+
+            session.apply("views", [](int v) {
+                return v + 1;
+                });
+
+            inja::json data;
+            std::string result;
+
+            int views = session.get("views", 0);
+
+            data["views"] = views;
+            data["current_user"] = user_nickname;
+            try {
+                result = env.render_file("./templates/reserve.html", data);
+            }
+            catch (inja::FileError) {
+                result = env.render_file("./templates/404.html", data);
+            }
+            return crow::response(result);
+        });
+
+    CROW_ROUTE(app, "/order/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string id, std::string token) 
         {
             auto& ctx = app.get_context<crow::CookieParser>(req);
             auto& session = app.get_context<Session>(req);
@@ -435,36 +494,7 @@ int main()
             return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/order/<string>/<string>/").methods("GET"_method)([&](const crow::request& req, std::string id, std::string token) 
-        {
-            auto& ctx = app.get_context<crow::CookieParser>(req);
-            auto& session = app.get_context<Session>(req);
-
-            std::string session_id = ctx.get_cookie("resto_session");
-            int user_id = session.get(session_id, 0);
-            std::string user_nickname = user_id != 0 ? getUserNickname(user_id, _connection) : "guest";
-
-            session.apply("views", [](int v) {
-                return v + 1;
-                });
-
-            inja::json data;
-            std::string result;
-
-            int views = session.get("views", 0);
-
-            data["views"] = views;
-            data["current_user"] = user_nickname;
-            try {
-                result = env.render_file("./templates/reserve.html", data);
-            }
-            catch (inja::FileError) {
-                result = env.render_file("./templates/404.html", data);
-            }
-            return crow::response(result);
-        });
-
-    CROW_ROUTE(app, "/login").methods("GET"_method, "POST"_method)([&](const crow::request& req) 
+    CROW_ROUTE(app, "/login").methods("GET"_method, "POST"_method)([&](const crow::request& req)
         {
             auto& ctx = app.get_context<crow::CookieParser>(req);
             auto& session = app.get_context<Session>(req);
@@ -493,7 +523,7 @@ int main()
             return crow::response(result);
         });
 
-    CROW_ROUTE(app, "/register").methods("POST"_method, "GET"_method)([&](const crow::request& req) 
+    CROW_ROUTE(app, "/register").methods("POST"_method)([&](const crow::request& req) 
         {
             auto& ctx = app.get_context<crow::CookieParser>(req);
             auto& session = app.get_context<Session>(req);
@@ -587,21 +617,26 @@ int main()
             return crow::response();
         });
 
-    CROW_ROUTE(app, "/validate_login/<string>/<string>/").methods("GET"_method, "POST"_method)([&](const crow::request& req, std::string email, std::string password) 
+    CROW_ROUTE(app, "/validate_login/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string email, std::string password) 
         {
             auto& session = app.get_context<Session>(req);
             auto& ctx = app.get_context<crow::CookieParser>(req);
             inja::json data;
             if (validateUser(email, password, _connection))
             {
+                pqxx::result user = getUserByEmail(email, _connection);
+                std::string user_nickname = user[0][1].as<std::string>();
+                int user_id = user[0][0].as<int>();
                 auto token = jwt::create()
-                    .set_issuer(email)
-                    .set_type("JWS")
+                    .set_issuer(user_nickname)
+                    .set_type("JWT")
+                    .set_id(user_nickname)
                     .set_issued_at(std::chrono::system_clock::now())
-                    .set_expires_at(std::chrono::system_clock::now() + std::chrono::days{ 1 })
-                    .set_payload_claim("sample", jwt::claim(std::string("test")))
-                    .sign(jwt::algorithm::hs256{ "secret" });
-                ctx.set_cookie("resto_session", password).max_age(30).path("/").httponly();
+                    .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{ 36000 })
+                    .set_payload_claim("resto__", jwt::claim(std::string("resto__jwt")))
+                    .sign(jwt::algorithm::hs256{ "courvogne__salt" });
+                session.set(token, user_id);
+                ctx.set_cookie("resto_session", token).max_age(60).path("/").httponly();
                 
                 return crow::response(token);
             }
@@ -610,12 +645,28 @@ int main()
             }
         });
 
-    CROW_ROUTE(app, "/register_user/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string name, std::string lastname, std::string email, std::string password) 
+    CROW_ROUTE(app, "/logout_user/").methods("POST"_method)([&](const crow::request& req)
+        {
+            auto& session = app.get_context<Session>(req);
+            auto& ctx = app.get_context<crow::CookieParser>(req);
+
+            std::string session_id = ctx.get_cookie("resto_session");
+
+            if(session.get(session_id, 0) != 0){
+                session.remove(session_id);
+                return crow::response(200);
+            }
+            else {
+                return crow::response(500);
+            }
+        });
+
+    CROW_ROUTE(app, "/register_user/<string>/<string>/<string>/<string>/<string>/").methods("POST"_method)([&](const crow::request& req, std::string nickname, std::string name, std::string lastname, std::string email, std::string password)
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
             if (validateEmail(email, _connection)) {
-                insertUser(name, lastname, email, password, _connection);
+                insertUser(nickname, name, lastname, email, password, _connection);
                 
             }
             return crow::response();
