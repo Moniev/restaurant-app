@@ -730,7 +730,7 @@ int main()
         {
             auto& session = app.get_context<Session>(req);
             inja::json data;
-            if (validateEmail(email, _connection) && validateNickname(nickname, _connection) {
+            if (validateEmail(email, _connection) && validateNickname(nickname, _connection)) {
                 if (insertUser(nickname, name, lastname, email, password, _connection)) {
                     return crow::response(200);
                 }
