@@ -1,14 +1,30 @@
-function getCookie(_name) {
-    const name = _name + "=";
-  const cDecoded = decodeURIComponent(document.cookie);
-  const cArr = cDecoded.split('; ');
-  let res;
-  cArr.forEach(val => {
-    if (val.indexOf(name) === 0) res = val.substring(name.length);
-  })
-  return res
-}
+const swiper = new Swiper('.slide__content', {
+    direction: 'horizontal',
+    slidesPerView: 4,
+    spaceBetween: 25,
+    loop: true,
 
+    pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+        dynamicBullets: true,
+    },
+
+    navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+    },
+
+    scrollbar: {
+        el: '.swiper-scrollbar',
+    },
+
+    breakpoints: {
+        0: { slidesPerView: 1 },
+        520: { slidesPerView: 2 },
+        950: { slidesPerView: 3 },
+    }
+});
 
 const navigateHome = () => {
     $(document).ready(function () {
@@ -115,9 +131,7 @@ const logoutAction = () => {
                 url: "/logout_user/",
                 contentType: "application/json",
                 success: function (response) {
-                    if (response) {
-                        window.location.href = "/home";
-                    }
+                    window.location.reload();
                 },
                 error: function () {
                     console.log("error")
